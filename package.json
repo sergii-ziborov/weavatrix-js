@@ -1,19 +1,19 @@
 {
-  "name": "weavatrix",
+  "name": "weavatrix-js",
   "version": "0.3.14",
   "type": "module",
-  "description": "Local repository intelligence MCP for AI coding agents: an always-fresh architecture graph with production-first evidence — blast radius, dead code, endpoints, clones, history, Health and architecture safeguards, with honestly labeled precision.",
+  "description": "JavaScript engine of Weavatrix, the local repository intelligence MCP for AI coding agents: an always-fresh architecture graph with production-first evidence — blast radius, dead code, endpoints, clones, history, Health and architecture safeguards, with honestly labeled precision. The weavatrix npm package now ships the native Rust engine; this fork continues the JavaScript line.",
   "author": "Sergii Ziborov <sergii.ziborov@gmail.com>",
   "license": "MIT",
   "homepage": "https://weavatrix.com",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sergii-ziborov/weavatrix.git"
+    "url": "git+https://github.com/sergii-ziborov/weavatrix-js.git"
   },
   "bugs": {
-    "url": "https://github.com/sergii-ziborov/weavatrix/issues"
+    "url": "https://github.com/sergii-ziborov/weavatrix-js/issues"
   },
-  "mcpName": "io.github.sergii-ziborov/weavatrix",
+  "mcpName": "io.github.sergii-ziborov/weavatrix-js",
   "engines": {
     "node": ">=18"
   },

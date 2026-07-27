@@ -1,4 +1,11 @@
-# Weavatrix
+# Weavatrix JS
+
+> This is the JavaScript engine of Weavatrix, continued as `weavatrix-js`.
+> The [`weavatrix`](https://www.npmjs.com/package/weavatrix) npm package ships
+> the native Rust engine from
+> [weavatrix-rust](https://github.com/sergii-ziborov/weavatrix-rust) starting
+> with 0.4.0; pin `weavatrix@0.3.14` or install `weavatrix-js` to stay on the
+> JavaScript implementation (including its LSP-assisted TypeScript path).
 
 **Local repository intelligence for AI coding agents — understand an application fast, then change it with evidence.**
 
