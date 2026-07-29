@@ -34,7 +34,7 @@ async function runAuditWithBaseline(args, ctx, currentGraph) {
 
     let currentAudit
     try {
-        currentAudit = await runAudit(ctx.repoRoot, currentGraph, args, ctx, {skipMalwareScan: !args.include_malware_scan})
+        currentAudit = await runAudit(ctx.repoRoot, currentGraph, args, ctx)
     } catch (error) {
         const reason = error instanceof Error ? error.message : String(error)
         return toolResult(`Audit failed while building the current graph: ${reason}`, {
@@ -90,7 +90,7 @@ async function runAuditWithBaseline(args, ctx, currentGraph) {
         if (currentMode !== 'full') graph = filterGraphForMode(graph, currentMode, {repoRoot: checkout})
         graph.graphBuildMode = currentMode
         graph.graphBuildScope = ''
-        return runAudit(checkout, graph, args, ctx, {skipMalwareScan: true})
+        return runAudit(checkout, graph, args, ctx)
     })
     if (!baseline.ok || !baseline.value?.ok) {
         const reason = baseline.error || baseline.value?.error || 'baseline audit failed'
@@ -105,14 +105,12 @@ async function runAuditWithBaseline(args, ctx, currentGraph) {
     const selected = auditFilter(currentAudit, args, selectedRaw, ctx.repoRoot)
     const max = Math.max(1, Math.min(100, Number(args.max_findings) || 30))
     const shown = selected.slice(0, max)
-    const optional = comparison.optional.checks.map((check) => `${check.name.toUpperCase()} UNCOMPARABLE (current ${check.current}; baseline ${check.baseline})`).join('; ')
     const stateOf = (finding) => mode === 'all' ? finding.debtState : mode
     const fixedShown = auditFilter(baseline.value, args, comparison.fixed, ctx.repoRoot).slice(0, Math.min(10, max))
     const text = [
         `${mode.toUpperCase()} DEBT — deterministic internal audit vs ${resolved.ref} (${resolved.commit.slice(0, 12)})`,
         `Changed scope: ${changedFiles.length} file(s) from ${scopeSource}${changedFiles.length ? ` — ${changedFiles.slice(0, 12).join(', ')}${changedFiles.length > 12 ? ', …' : ''}` : ' — working tree matches the baseline'}.`,
         `Scope comparison: ${comparison.totals.scope.new} new, ${comparison.totals.scope.existing} existing, ${comparison.totals.scope.fixed} fixed deterministic finding(s). Repository totals: ${comparison.totals.repository.new} new, ${comparison.totals.repository.existing} existing, ${comparison.totals.repository.fixed} fixed.`,
-        `Optional checks: ${optional}. Supply-chain findings are not assigned new/existing/fixed state from a source-only checkout.`,
         '',
         `Showing ${shown.length} of ${selected.length} ${mode} finding(s) after filters:`,
         ...shown.map((finding) => formatDebtFinding(finding, stateOf(finding))),
@@ -134,7 +132,6 @@ async function runAuditWithBaseline(args, ctx, currentGraph) {
             new: comparison.new,
             existing: comparison.existing,
             fixed: comparison.fixed,
-            optional: comparison.optional,
         },
         findings: selected,
         changeEvidence,
@@ -144,18 +141,15 @@ async function runAuditWithBaseline(args, ctx, currentGraph) {
     })
 }
 
-// Full internal health audit: dead code + unused exports, dependency findings (npm/go/py missing &
-// unused deps), structure (import cycles / orphans / boundary rules), supply-chain (offline OSV
-// advisories, typosquat, lockfile drift), optional malware heuristics.
+// Full offline health audit: dead code + unused exports, dependency declarations,
+// lockfile drift, name-confusion review, and structural/correctness evidence.
 export async function tRunAudit(g, args, ctx) {
     if (!ctx.repoRoot) return toolResult('Audit needs the repo root (not provided to this server).', {
         status: 'INVALID', findings: [], reason: 'repo root unavailable',
     }, {completeness: {status: 'PARTIAL', reason: 'repo root unavailable'}})
     if (args.base_ref) return runAuditWithBaseline(args, ctx, rawGraph(ctx))
     const graph = effectiveRawGraph(ctx)
-    const audit = await runAudit(ctx.repoRoot, graph, args, ctx, {
-        skipMalwareScan: !args.include_malware_scan, // greps installed packages — slow, so opt-in
-    })
+    const audit = await runAudit(ctx.repoRoot, graph, args, ctx)
     if (!audit.ok) return toolResult(`Audit failed: ${audit.error}`, {
         status: 'ERROR', findings: [], reason: audit.error,
     }, {completeness: {status: 'PARTIAL', reason: audit.error}})
@@ -189,7 +183,6 @@ export async function tRunAudit(g, args, ctx) {
         extensionCapabilities: audit.extensionCapabilities || [],
         dependencyReport: audit.dependencyReport,
         conventionReachability: audit.conventionReachability,
-        checks: audit.checks,
     }, {
         page: {shown: shown.length, total: filtered.length, capped: shown.length < filtered.length},
         completeness: {status: 'COMPLETE'},

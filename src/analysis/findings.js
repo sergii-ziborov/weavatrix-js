@@ -1,6 +1,4 @@
-// Unified Finding factory + rollups for the internal dependency/security engine (DEPS_SECURITY_PLAN.md §2.3).
-// Every analyzer (unused / structure / vulnerability / malware) and the external-tool adapter emit THIS shape,
-// so the renderer and the AI summarizer consume one contract regardless of engine.
+// Unified Finding factory and rollups for offline dependency/structure analyzers.
 import { createHash } from "node:crypto";
 
 const SEVERITY_ORDER = ["critical", "high", "medium", "low", "info"];
@@ -51,7 +49,7 @@ export function makeFinding(f) {
 
 export function summarizeFindings(findings) {
   const bySeverity = { critical: 0, high: 0, medium: 0, low: 0, info: 0 };
-  const byCategory = { unused: 0, structure: 0, vulnerability: 0, malware: 0 };
+  const byCategory = { unused: 0, structure: 0 };
   for (const f of findings || []) {
     if (f.severity in bySeverity) bySeverity[f.severity]++;
     if (f.category in byCategory) byCategory[f.category]++;

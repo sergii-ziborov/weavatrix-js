@@ -37,15 +37,15 @@ jobs:
       - run: npm run build:mcpb
       - name: Generate portable bundle checksum
         shell: bash
-        run: cd dist-mcpb && sha256sum weavatrix.mcpb > weavatrix.mcpb.sha256
+        run: cd dist-mcpb && sha256sum weavatrix-js.mcpb > weavatrix-js.mcpb.sha256
       - run: npm pack --dry-run --json
       - name: Preserve the verified release bundle
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: weavatrix-release-${{ github.sha }}
+          name: weavatrix-js-release-${{ github.sha }}
           path: |
-            dist-mcpb/weavatrix.mcpb
-            dist-mcpb/weavatrix.mcpb.sha256
+            dist-mcpb/weavatrix-js.mcpb
+            dist-mcpb/weavatrix-js.mcpb.sha256
           if-no-files-found: error
           retention-days: 7
 
@@ -75,29 +75,39 @@ jobs:
       - name: Download the verified release bundle
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: weavatrix-release-${{ github.sha }}
+          name: weavatrix-js-release-${{ github.sha }}
           path: dist-mcpb
       - name: Verify bundle checksum
-        run: cd dist-mcpb && sha256sum --check weavatrix.mcpb.sha256
+        run: cd dist-mcpb && sha256sum --check weavatrix-js.mcpb.sha256
       - name: Attest MCPB provenance
         uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
         with:
-          subject-path: dist-mcpb/weavatrix.mcpb
+          subject-path: dist-mcpb/weavatrix-js.mcpb
       - name: Publish npm package with trusted publishing
+        env:
+          BOOTSTRAP_NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         shell: bash
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          if npm view "weavatrix@$VERSION" version >/dev/null 2>&1; then
-            echo "weavatrix@$VERSION is already published; verifying it"
-          else
+          if npm view "weavatrix-js@$VERSION" version >/dev/null 2>&1; then
+            echo "weavatrix-js@$VERSION is already published; verifying it"
+          elif npm view "weavatrix-js" name >/dev/null 2>&1; then
             npm publish --ignore-scripts --provenance --access public
+          else
+            [[ -n "$BOOTSTRAP_NPM_TOKEN" ]] || {
+              echo "The first weavatrix-js publish requires repository secret NPM_TOKEN; configure npm trusted publishing immediately afterwards." >&2
+              exit 1
+            }
+            NODE_AUTH_TOKEN="$BOOTSTRAP_NPM_TOKEN" \
+              npm publish --ignore-scripts --provenance --access public
+            echo "::warning::Configure weavatrix-js as an npm trusted publisher, then remove NPM_TOKEN."
           fi
 
           PUBLISHED_HEAD=""
           PREDICATE=""
           for attempt in $(seq 1 24); do
-            PUBLISHED_HEAD="$(npm view "weavatrix@$VERSION" gitHead --json 2>/dev/null | tr -d '\"\r\n' || true)"
-            PREDICATE="$(npm view "weavatrix@$VERSION" dist.attestations.provenance.predicateType --json 2>/dev/null | tr -d '\"\r\n' || true)"
+            PUBLISHED_HEAD="$(npm view "weavatrix-js@$VERSION" gitHead --json 2>/dev/null | tr -d '\"\r\n' || true)"
+            PREDICATE="$(npm view "weavatrix-js@$VERSION" dist.attestations.provenance.predicateType --json 2>/dev/null | tr -d '\"\r\n' || true)"
             if [[ "$PUBLISHED_HEAD" == "$GITHUB_SHA" && "$PREDICATE" == "https://slsa.dev/provenance/v1" ]]; then
               break
             fi
@@ -119,9 +129,9 @@ jobs:
         shell: bash
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          REGISTRY_RESPONSE="$(curl --fail --silent --show-error 'https://registry.modelcontextprotocol.io/v0.1/servers?search=io.github.sergii-ziborov%2Fweavatrix')"
+          REGISTRY_RESPONSE="$(curl --fail --silent --show-error 'https://registry.modelcontextprotocol.io/v0.1/servers?search=io.github.sergii-ziborov%2Fweavatrix-js')"
           if jq --exit-status --arg version "$VERSION" \
-            '.servers[]?.server | select(.name == "io.github.sergii-ziborov/weavatrix" and .version == $version)' \
+            '.servers[]?.server | select(.name == "io.github.sergii-ziborov/weavatrix-js" and .version == $version)' \
             <<<"$REGISTRY_RESPONSE" >/dev/null; then
             echo "MCP Registry already contains Weavatrix $VERSION; skipping publish"
           else
@@ -142,10 +152,10 @@ jobs:
       - name: Download the verified release bundle
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: weavatrix-release-${{ github.sha }}
+          name: weavatrix-js-release-${{ github.sha }}
           path: dist-mcpb
       - name: Verify bundle checksum
-        run: cd dist-mcpb && sha256sum --check weavatrix.mcpb.sha256
+        run: cd dist-mcpb && sha256sum --check weavatrix-js.mcpb.sha256
       - name: Compose checked-in and generated release notes
         env:
           GH_TOKEN: ${{ github.token }}
@@ -171,8 +181,8 @@ jobs:
             IS_DRAFT="$(gh release view "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft)"
             if [[ "$IS_DRAFT" == "true" ]]; then
               gh release upload "$GITHUB_REF_NAME" \
-                dist-mcpb/weavatrix.mcpb \
-                dist-mcpb/weavatrix.mcpb.sha256 \
+                dist-mcpb/weavatrix-js.mcpb \
+                dist-mcpb/weavatrix-js.mcpb.sha256 \
                 --repo "$GITHUB_REPOSITORY" \
                 --clobber
               gh release edit "$GITHUB_REF_NAME" \
@@ -183,9 +193,9 @@ jobs:
                 --latest
             else
               mkdir existing-assets
-              gh release download "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --pattern 'weavatrix.mcpb*' --dir existing-assets
-              cmp --silent dist-mcpb/weavatrix.mcpb existing-assets/weavatrix.mcpb
-              cmp --silent dist-mcpb/weavatrix.mcpb.sha256 existing-assets/weavatrix.mcpb.sha256
+              gh release download "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --pattern 'weavatrix-js.mcpb*' --dir existing-assets
+              cmp --silent dist-mcpb/weavatrix-js.mcpb existing-assets/weavatrix-js.mcpb
+              cmp --silent dist-mcpb/weavatrix-js.mcpb.sha256 existing-assets/weavatrix-js.mcpb.sha256
               echo "Existing release assets match the verified build; leaving them unchanged"
             fi
           else
@@ -196,8 +206,8 @@ jobs:
               --title "$GITHUB_REF_NAME" \
               --draft
             gh release upload "$GITHUB_REF_NAME" \
-              dist-mcpb/weavatrix.mcpb \
-              dist-mcpb/weavatrix.mcpb.sha256 \
+              dist-mcpb/weavatrix-js.mcpb \
+              dist-mcpb/weavatrix-js.mcpb.sha256 \
               --repo "$GITHUB_REPOSITORY"
             gh release edit "$GITHUB_REF_NAME" \
               --repo "$GITHUB_REPOSITORY" \

@@ -43,9 +43,9 @@ export function minimalEvidence(overrides = {}) {
       },
       health: {
         state: 'PARTIAL', verdict: 'UNKNOWN',
-        completeness: {findings: emptyCompleteness, hotspots: emptyCompleteness, complexity: {analyzed: 0}, reasons: ['OPTIONAL_CHECKS_INCOMPLETE']},
+        completeness: {findings: emptyCompleteness, hotspots: emptyCompleteness, complexity: {analyzed: 0}, reasons: []},
         summary: {bySeverity: {}, byCategory: {}, dead: {}, structure: {}},
-        checks: {osv: 'NOT_CHECKED', malware: 'NOT_APPLICABLE'}, findings: [],
+        findings: [],
         complexity: {
           thresholds: {
             loc: {warning: 120, high: 300},
@@ -65,9 +65,9 @@ export function minimalEvidence(overrides = {}) {
         completeness: {
           inventory: emptyCompleteness, directUsage: emptyCompleteness,
           dependencyGraphNodes: emptyCompleteness, dependencyGraphEdges: emptyCompleteness,
-          reasons: ['OPTIONAL_CHECKS_INCOMPLETE'],
+          reasons: [],
         },
-        checks: {osv: 'NOT_CHECKED', malware: 'NOT_APPLICABLE'}, inventory: [], directUsage: [],
+        inventory: [], directUsage: [],
         dependencyGraph: {
           state: 'COMPLETE', ecosystem: 'npm', lockfile: 'package-lock.json', lockfileVersion: 3, root: '(root)',
           completeness: {

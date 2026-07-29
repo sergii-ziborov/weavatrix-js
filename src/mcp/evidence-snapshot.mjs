@@ -20,7 +20,7 @@ export async function createEvidenceSnapshot({repoRoot, graph}) {
     try { aggregate = aggregateGraph(inputGraph) } catch { aggregate = null }
 
     let audit = null
-    try { audit = await runInternalAudit(repoRoot, {graph: inputGraph, skipMalwareScan: true}) } catch { audit = null }
+    try { audit = await runInternalAudit(repoRoot, {graph: inputGraph}) } catch { audit = null }
 
     let stack = null
     let stackError = false

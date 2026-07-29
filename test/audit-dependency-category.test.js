@@ -4,10 +4,10 @@ import {isDependencyAuditFinding} from '../src/mcp/tools-health.mjs'
 import {formatOrdinaryAudit} from '../src/mcp/health/audit-format.mjs'
 
 test('dependencies audit projection selects manifest/import health without relabelling findings', () => {
-    for (const rule of ['unused-dep', 'missing-dep', 'duplicate-dep', 'unresolved-import', 'lockfile-drift']) {
+    for (const rule of ['unused-dep', 'missing-dep', 'duplicate-dep', 'unresolved-import', 'lockfile-drift', 'typosquat']) {
         assert.equal(isDependencyAuditFinding({category: rule === 'missing-dep' ? 'structure' : 'unused', rule}), true, rule)
     }
-    for (const rule of ['unused-file', 'circular-dep', 'known-vuln', 'malicious-package']) {
+    for (const rule of ['unused-file', 'circular-dep']) {
         assert.equal(isDependencyAuditFinding({category: 'structure', rule}), false, rule)
     }
 })
@@ -20,14 +20,13 @@ test('dependency headline follows production-first path scope and reports classi
     }
     const audit = {
         repo: 'fixture',
-        scanned: {files: 2, symbols: 0, externalImports: 1, manifestDeps: 2, malwareScanMode: 'skipped'},
+        scanned: {files: 2, symbols: 0, externalImports: 1, manifestDeps: 2},
         findings: [finding],
         dependencyReport: {
             status: 'COMPLETE', declared: 2, importRecords: 1, unused: 1, missing: 0, duplicateDeclarations: 0,
             ecosystems: {npm: {present: true, ecosystem: 'npm', status: 'CHECKED', completeness: 'COMPLETE', manifests: ['package.json'], declared: 2}},
             verificationCoverage: {npm: 'COMPLETE'}, perFindingVerification: true,
         },
-        checks: {},
     }
 
     const production = formatOrdinaryAudit(audit, {})

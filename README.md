@@ -4,7 +4,7 @@
 > The [`weavatrix`](https://www.npmjs.com/package/weavatrix) npm package ships
 > the native Rust engine from
 > [weavatrix-rust](https://github.com/sergii-ziborov/weavatrix-rust) starting
-> with 0.4.0; pin `weavatrix@0.3.14` or install `weavatrix-js` to stay on the
+> with 1.0.0; pin `weavatrix@0.3.14` or install `weavatrix-js` to stay on the
 > JavaScript implementation (including its LSP-assisted TypeScript path).
 
 **Local repository intelligence for AI coding agents — understand an application fast, then change it with evidence.**
@@ -16,14 +16,14 @@ answers change impact, Health, dead-code review, duplicates, history and intende
 questions. **34 network-free tools. No repository data leaves your machine.**
 
 - Website: [weavatrix.com](https://weavatrix.com)
-- Source: [github.com/sergii-ziborov/weavatrix](https://github.com/sergii-ziborov/weavatrix)
-- npm: [`weavatrix`](https://www.npmjs.com/package/weavatrix) — `npx -y weavatrix <repoRoot>`
+- Source: [github.com/sergii-ziborov/weavatrix-js](https://github.com/sergii-ziborov/weavatrix-js)
+- npm: [`weavatrix-js`](https://www.npmjs.com/package/weavatrix-js) — `npx -y weavatrix-js <repoRoot>`
 
-## Pure-Rust engine
+## Primary native Rust engine
 
 [`weavatrix-rust`](https://github.com/sergii-ziborov/weavatrix-rust) is the
-pure-Rust read-only MCP and library implementation. It covers the 35 read-only
-capabilities of the JavaScript line and adds cross-repository Git, vector
+pure-Rust read-only MCP and library implementation. Its default build exposes
+39 tools, covers the 34 read-only capabilities of this JavaScript line and adds cross-repository Git, vector
 search, semantic/SEO linking, and temporal-memory context through independent
 MIT crates.
 
@@ -52,17 +52,17 @@ Requires Node ≥ 18.
 
 ```sh
 # Claude Code
-claude mcp add -s user weavatrix -- npx -y weavatrix <repoRoot>
+claude mcp add -s user weavatrix-js -- npx -y weavatrix-js <repoRoot>
 
 # Codex CLI
-codex mcp add weavatrix -- npx -y weavatrix <repoRoot>
+codex mcp add weavatrix-js -- npx -y weavatrix-js <repoRoot>
 ```
 
 ```toml
 # or in ~/.codex/config.toml
-[mcp_servers.weavatrix]
+[mcp_servers.weavatrix-js]
 command = "npx"
-args = ["-y", "weavatrix", "C:/path/to/repo"]
+args = ["-y", "weavatrix-js", "C:/path/to/repo"]
 startup_timeout_sec = 20
 tool_timeout_sec = 60
 ```
@@ -70,9 +70,9 @@ tool_timeout_sec = 60
 Or run from a clone:
 
 ```sh
-git clone https://github.com/sergii-ziborov/weavatrix
-cd weavatrix && npm install
-claude mcp add -s user weavatrix -- node <path-to>/weavatrix/bin/weavatrix-mcp.mjs <repoRoot>
+git clone https://github.com/sergii-ziborov/weavatrix-js
+cd weavatrix-js && npm install
+claude mcp add -s user weavatrix-js -- node <path-to>/weavatrix-js/bin/weavatrix-mcp.mjs <repoRoot>
 ```
 
 `<repoRoot>` is the repository to start with. Graphs are derived data and never live in your repo:
@@ -81,11 +81,12 @@ they are stored in the per-user registry at `~/.weavatrix/graphs/<repository-sto
 just use a tool — graph and Health reads auto-reconcile the working graph before answering.
 
 An agent skill with recipes ships in [skill/SKILL.md](skill/SKILL.md) — install it as
-`~/.claude/skills/weavatrix/SKILL.md` (Claude Code) or `~/.codex/skills/weavatrix/SKILL.md` (Codex).
+`~/.claude/skills/weavatrix-js/SKILL.md` (Claude Code) or
+`~/.codex/skills/weavatrix-js/SKILL.md` (Codex).
 
 ## Configure
 
-**Security profile** — pass a profile as the final positional argument (omitted = `offline`):
+**Local capability profile** — pass a profile as the final positional argument (omitted = `offline`):
 
 | Profile | Local repository switching | Cross-repo graph reads | Network requests | Tools |
 |---|---:|---:|---:|---:|
@@ -94,7 +95,7 @@ An agent skill with recipes ships in [skill/SKILL.md](skill/SKILL.md) — instal
 
 ```sh
 # hard-pin one repository and expose no cross-repo tools:
-claude mcp add -s user weavatrix -- npx -y weavatrix <repoRoot> pinned
+claude mcp add -s user weavatrix-js -- npx -y weavatrix-js <repoRoot> pinned
 ```
 
 Advanced registrations may pass an exact comma-separated capability set instead:
@@ -147,7 +148,7 @@ The 34 methods project the same reusable graph into the smallest view a task nee
   `list_endpoints` (Express/Fastify/Nest/Flask/FastAPI/Go mux/Rust axum & actix-web/Spring),
   `trace_endpoint`.
 - **health** — `find_dead_code`, `run_audit` (capability matrix + unused files/exports/dependencies,
-  missing/duplicate deps, offline OSV vulnerabilities, typosquats, lockfile drift; `base_ref` +
+  missing/duplicate deps, typosquats and lockfile drift; `base_ref` +
   `debt: new|existing|all` for review-scoped results), `find_duplicates` (MOSS winnowing, catches
   renamed clones), `coverage_map`, `hot_path_review`, `verify_architecture`,
   `explain_architecture_violation`, `propose_architecture_exception`.
@@ -210,10 +211,13 @@ vulnerability findings. Where each comes from and how it is bounded:
 | Debug / dynamic loading | Cache-busted `import()` hot-reloads watched MCP tool modules; `createRequire` loads package metadata and parser deps | Loads files from the installed package only; no `eval` |
 | Environment access | Reads local `WEAVATRIX_*` settings; children inherit a credential-stripped env | Connector secrets are removed; tsserver receives only allowlisted OS/temp/locale values |
 | Filesystem access | Reads the active repository, graph, lockfiles and coverage; writes derived graphs and caches | Realpath containment blocks traversal and symlink escapes; `pinned` removes `open_repo` |
-| URL strings | Advisory findings may contain fixed OSV documentation links | The core has no outbound request implementation |
-
 `read_source` accepts repo-relative regular files only, caps a read at 2 MB, and refuses lexical or
 realpath escapes. Report suspected vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
+
+Dependency vulnerability matching, advisory refresh and installed-package malware review are not
+part of this package. Those networked/security-review workflows live in
+[`weavatrix-online`](https://github.com/sergii-ziborov/weavatrix-online), so the local JS engine does
+not advertise a security verdict it cannot establish.
 
 ## Languages
 

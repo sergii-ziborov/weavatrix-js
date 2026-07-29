@@ -1,7 +1,6 @@
 export const SEVERITIES = new Set(['critical', 'high', 'medium', 'low', 'info'])
 export const CONFIDENCE = new Set(['high', 'medium', 'low'])
-export const CATEGORIES = new Set(['unused', 'structure', 'vulnerability', 'malware'])
-const CHECK_KEYS = ['osv', 'malware']
+export const CATEGORIES = new Set(['unused', 'structure'])
 export const PACKAGE_DEPENDENCY_KINDS = new Set(['runtime', 'dev', 'optional', 'peer', 'optional-peer'])
 export const CAPS = Object.freeze({
     modules: 500, dependencies: 2000, findings: 500, hotspots: 250, badges: 100,
@@ -78,11 +77,5 @@ export function reasons(values) {
 export function numericRecord(value, keys) {
     const out = {}
     for (const key of keys) out[key] = int(value?.[key])
-    return out
-}
-
-export function checks(value) {
-    const out = {}
-    for (const key of CHECK_KEYS) out[key] = state(value?.[key])
     return out
 }

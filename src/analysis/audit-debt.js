@@ -1,7 +1,4 @@
-// Deterministic health-debt comparison. Supply-chain findings are deliberately excluded: an
-// immutable source checkout has no trustworthy per-repository OSV refresh stamp or installed-package
-// malware state, so calling those findings new/fixed would manufacture certainty.
-const OPTIONAL_CATEGORIES = new Set(["vulnerability", "malware"]);
+// Deterministic offline health-debt comparison over repository-derived findings.
 
 const normalizePath = (value) => String(value || "").trim()
   .replace(/\\/g, "/")
@@ -45,14 +42,11 @@ export function scopeAuditFindings(findings, changedFiles) {
   return (findings || []).filter((finding) => findingTouchesAuditScope(finding, scope));
 }
 
-const comparable = (findings) => (findings || []).filter((finding) => !OPTIONAL_CATEGORIES.has(finding.category));
-const optional = (findings) => (findings || []).filter((finding) => OPTIONAL_CATEGORIES.has(finding.category));
-
 // Findings already carry stable IDs from makeFinding(). Compare globally first, then apply the
 // changed-file scope. This prevents pre-existing debt in an edited file from becoming "new".
 export function compareAuditDebt(currentAudit, baselineAudit, changedFiles = null, { completeChangeSet = false } = {}) {
-  const current = comparable(currentAudit?.findings);
-  const baseline = comparable(baselineAudit?.findings);
+  const current = currentAudit?.findings || [];
+  const baseline = baselineAudit?.findings || [];
   const currentIds = new Set(current.map((finding) => String(finding.id)));
   const baselineIds = new Set(baseline.map((finding) => String(finding.id)));
   const scopedCurrent = scopeAuditFindings(current, changedFiles);
@@ -75,17 +69,6 @@ export function compareAuditDebt(currentAudit, baselineAudit, changedFiles = nul
     existing,
     fixed,
     all: all.map((finding) => ({ ...finding, debtState: baselineIds.has(String(finding.id)) ? "existing" : "new" })),
-    optional: {
-      current: optional(currentAudit?.findings),
-      baseline: optional(baselineAudit?.findings),
-      checks: ["osv", "malware"].map((name) => ({
-        name,
-        status: "UNCOMPARABLE",
-        current: currentAudit?.checks?.[name]?.status || "ERROR",
-        baseline: baselineAudit?.checks?.[name]?.status || "ERROR",
-        reason: "The immutable source checkout cannot reproduce the current advisory-refresh or installed-package scan state.",
-      })),
-    },
     totals: {
       scope: { new: fresh.length, existing: existing.length, fixed: fixed.length, active: fresh.length + existing.length },
       repository: { new: globalNew, existing: globalExisting, fixed: globalFixed, active: current.length },

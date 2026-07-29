@@ -16,7 +16,6 @@ export function buildDependencyHealth({
   packageScopes,
   sourceFiles,
   correctnessCoverage,
-  checks,
 }) {
   const dependencyFindings = findings.filter((finding) => ["unused-dep", "missing-dep", "duplicate-dep"].includes(finding.rule));
   const graphComplete = !((graph.graphBuildMode && graph.graphBuildMode !== "full") || graph.graphBuildScope);
@@ -77,7 +76,6 @@ export function buildDependencyHealth({
     graphComplete,
     dependencyStatus: status,
     dependencyEcosystems: ecosystems,
-    checks,
     sourceFiles,
     correctnessCoverage,
     measuredCoverageFiles: measuredCoverage.size,

@@ -1,5 +1,5 @@
 import {
-    CAPS, PACKAGE_DEPENDENCY_KINDS, bool, checks, compare, count, int, list,
+    CAPS, PACKAGE_DEPENDENCY_KINDS, bool, compare, count, int, list,
     numericRecord, packageName, packageVersion, path, reasons, set, state, text,
     token, verdict,
 } from './evidence-common.mjs'
@@ -90,6 +90,6 @@ export function sanitizePackages(value) {
             dependencyGraphEdges: count(value?.completeness?.dependencyGraphEdges, dependencyGraph.completeness.edges.total, dependencyGraph.edges.length),
             reasons: reasons(value?.completeness?.reasons),
         },
-        checks: checks(value?.checks), inventory: inventory.items, directUsage: directUsage.items, dependencyGraph,
+        inventory: inventory.items, directUsage: directUsage.items, dependencyGraph,
     }
 }

@@ -15,7 +15,7 @@ an issue that may already be resolved.
 Please do not open a public issue for a suspected vulnerability. Use GitHub's private vulnerability
 reporting flow:
 
-https://github.com/sergii-ziborov/weavatrix/security/advisories/new
+https://github.com/sergii-ziborov/weavatrix-js/security/advisories/new
 
 Include the affected Weavatrix version, operating system, MCP client, enabled capability groups,
 reproduction steps, expected boundary, observed behavior, and potential impact. Avoid including real
@@ -28,15 +28,9 @@ mitigation is available so users have a reasonable opportunity to update.
 
 The default `offline` MCP profile exposes no HTTP tools. Every standard source, manifest,
 configuration and coverage read is canonical-path-contained within the active repository and rejects
-traversal plus symlink or junction escapes. The optional malware dependency scan may inspect installed
-dependency caches such as GOPATH. `offline` permits repository switching only through an explicit
+traversal plus symlink or junction escapes. `offline` permits repository switching only through an explicit
 local `open_repo` call; select `pinned` to remove that tool, the global repository listing, and
 cross-repository API tracing, holding a hard startup-repository boundary.
-
-Installed-package malware pattern matching is static heuristic evidence. It cannot confirm execution,
-package compromise, or credential exposure and therefore cannot emit `critical`; heuristic severity
-is capped at `high` with explicit `NOT_VERIFIED` runtime/origin/lockfile/exposure fields. Independently
-confirmed malicious-package advisories remain separate vulnerability evidence and may be critical.
 
 The JS/TS precision overlay is enabled by default for new graphs and runs the package-pinned `typescript-language-server` and
 TypeScript runtime as local child processes. It never resolves a repository executable, invokes
@@ -82,9 +76,10 @@ scripts are repository-controlled code and may have arbitrary side effects, so e
 for repositories and scripts you trust.
 
 The 0.3 MIT artifact contains no HTTP tool, sync endpoint/token setting, remote advisory refresher or
-compatibility alias that can enable one. `offline` and `pinned` are both network-free. Advisory
-matching reads only a local validated cache; a missing or stale cache remains `NOT_CHECKED` or
-`PARTIAL`, never a clean zero.
+compatibility alias that can enable one. `offline` and `pinned` are both network-free. It also
+contains no dependency-vulnerability matcher or installed-package malware scanner. Advisory refresh,
+cache validation, dependency matching and malware review belong to the separate
+`weavatrix-online` MCP.
 
 The public extension API allows a dependent package to add MCP tools, packaged skills and local
 audit providers. Extension tools cannot replace a core tool, extension profiles cannot replace a
@@ -96,6 +91,6 @@ Every MCP response includes transient local `_meta["weavatrix/metrics"]` timing,
 estimate, graph freshness/revision/update and graph-cache status. Weavatrix does not persist, aggregate
 or transmit these measurements; they are response evidence for the caller, not product telemetry.
 
-Core exposes local-only services that build and validate the bounded source-free payload, validate
-connector-provided advisory records, create opaque repository identity and cache a validated
-architecture contract. These services read no connector credential and perform no network I/O.
+Core exposes local-only services that build and validate the bounded source-free payload, create
+opaque repository identity and cache a validated architecture contract. These services read no
+connector credential and perform no network I/O.

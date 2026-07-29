@@ -1,19 +1,19 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.sergii-ziborov/weavatrix",
+  "name": "io.github.sergii-ziborov/weavatrix-js",
   "description": "Always-fresh local repo graph: LSP-backed impact, Health, dead code, endpoints, architecture.",
   "repository": {
-    "url": "https://github.com/sergii-ziborov/weavatrix",
+    "url": "https://github.com/sergii-ziborov/weavatrix-js",
     "source": "github"
   },
-  "version": "0.3.14",
+  "version": "0.3.15",
   "websiteUrl": "https://weavatrix.com",
   "packages": [
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
-      "identifier": "weavatrix",
-      "version": "0.3.14",
+      "identifier": "weavatrix-js",
+      "version": "0.3.15",
       "runtimeHint": "npx",
       "transport": { "type": "stdio" },
       "packageArguments": [

@@ -12,8 +12,6 @@ test("internal audit leaves dependency health NOT_CHECKED when no manifest ecosy
     writeFileSync(join(repo, "README.md"), "fixture without a dependency manifest\n");
     const audit = await runInternalAudit(repo, {
       graph: { nodes: [], links: [], externalImports: [] },
-      advisoryStorePath: join(repo, "missing-advisories.json"),
-      skipMalwareScan: true,
     });
 
     assert.equal(audit.dependencyReport.status, "NOT_CHECKED");
@@ -46,8 +44,6 @@ test("internal audit roots a bounded dynamic-import target instead of reporting 
     };
     const audit = await runInternalAudit(repo, {
       graph,
-      advisoryStorePath: join(repo, "missing-advisories.json"),
-      skipMalwareScan: true,
     });
     assert.ok(!audit.findings.some((finding) => finding.rule === "orphan-file" && finding.file === "src/tools-health.mjs"));
   } finally {
@@ -67,10 +63,8 @@ test("internal audit reports NOT_CHECKED states and honors managed Python runtim
       links: [],
       externalImports: [{ file: "scripts/runtime.py", spec: "numpy", pkg: "numpy", ecosystem: "PyPI", kind: "py-import", line: 1 }],
     };
-    const audit = await runInternalAudit(repo, { graph, advisoryStorePath: join(repo, "missing-advisories.json"), skipMalwareScan: true });
+    const audit = await runInternalAudit(repo, { graph });
     assert.equal(audit.ok, true);
-    assert.equal(audit.checks.osv.status, "NOT_CHECKED");
-    assert.equal(audit.checks.malware.status, "NOT_CHECKED");
     assert.equal(audit.scanned.managedPythonDependencies, 1);
     assert.equal(audit.dependencyReport.status, "COMPLETE");
     assert.equal(audit.dependencyReport.importRecords, 1);
@@ -82,43 +76,10 @@ test("internal audit reports NOT_CHECKED states and honors managed Python runtim
     assert.equal(audit.healthCapabilities.dependencies.completeness, "COMPLETE");
     assert.equal(audit.healthCapabilities.runtimeCorrectness.status, "CHECKED");
     assert.equal(audit.healthCapabilities.concurrency.status, "NOT_SUPPORTED");
-    assert.equal(audit.healthCapabilities.advisories.status, "NOT_CHECKED");
-    assert.equal(audit.healthCapabilities.malware.status, "NOT_CHECKED");
     assert.equal(audit.healthCapabilities.coverage.status, "NOT_CHECKED");
   } finally {
     rmSync(repo, { recursive: true, force: true });
   }
-});
-
-test("internal audit preserves PARTIAL OSV coverage and distrusts a legacy global-only stamp", async () => {
-  const repo = mkdtempSync(join(tmpdir(), "weavatrix-audit-osv-state-"));
-  try {
-    writeFileSync(join(repo, "package.json"), JSON.stringify({ name: "fixture" }));
-    const graph = { nodes: [], links: [], externalImports: [] };
-    const partialPath = join(repo, "partial.json");
-    const now = new Date().toISOString();
-    writeFileSync(partialPath, JSON.stringify({
-      meta: { fetched_at: now, repos: { [repo]: { fetched_at: now, status: "PARTIAL", queried: 4, queried_ok: 3, error_count: 1 } } },
-      records: {},
-    }));
-    const partial = await runInternalAudit(repo, { graph, advisoryStorePath: partialPath, skipMalwareScan: true });
-    assert.equal(partial.checks.osv.status, "PARTIAL");
-    assert.match(partial.checks.osv.detail, /3\/4/);
-
-    const staleOkPath = join(repo, "stale-ok.json");
-    writeFileSync(staleOkPath, JSON.stringify({
-      meta: { fetched_at: now, repos: { [repo]: { fetched_at: now, status: "OK", queried: 0, queried_ok: 0, query_fingerprint: "stale" } } },
-      records: {},
-    }));
-    const staleOk = await runInternalAudit(repo, { graph, advisoryStorePath: staleOkPath, skipMalwareScan: true });
-    assert.equal(staleOk.checks.osv.status, "PARTIAL");
-    assert.match(staleOk.checks.osv.detail, /Dependency versions changed/);
-
-    const legacyPath = join(repo, "legacy.json");
-    writeFileSync(legacyPath, JSON.stringify({ meta: { fetched_at: now }, records: {} }));
-    const legacy = await runInternalAudit(repo, { graph, advisoryStorePath: legacyPath, skipMalwareScan: true });
-    assert.equal(legacy.checks.osv.status, "NOT_CHECKED");
-  } finally { rmSync(repo, { recursive: true, force: true }); }
 });
 
 test("internal audit suppresses convention/generated/config-excluded dead and unused noise", async () => {
@@ -146,8 +107,6 @@ test("internal audit suppresses convention/generated/config-excluded dead and un
     const graph = { nodes, links, externalImports: [] };
     const audit = await runInternalAudit(repo, {
       graph,
-      advisoryStorePath: join(repo, "missing-advisories.json"),
-      skipMalwareScan: true,
     });
     assert.equal(audit.ok, true);
     const unusedExport = audit.findings.find((finding) => finding.file === "src/product.ts" && finding.rule === "unused-export");
@@ -195,8 +154,6 @@ test("internal audit does not call framework and configured schema exports test-
     ];
     const audit = await runInternalAudit(repo, {
       graph: { nodes, links, externalImports: [] },
-      advisoryStorePath: join(repo, "missing-advisories.json"),
-      skipMalwareScan: true,
     });
     for (const file of ["app/dashboard/page.tsx", "db/schema.ts"]) {
       assert.ok(!audit.findings.some((finding) => finding.file === file && ["unused-export", "test-only-symbol", "orphan-file"].includes(finding.rule)), file);
@@ -228,8 +185,6 @@ test("internal audit maps Java imports to Maven and Gradle declarations with rev
         links: [],
         externalImports: [{ file: javaFile, spec: "org.slf4j.Logger", pkg: "org.slf4j", ecosystem: "Maven", line: 1 }],
       },
-      advisoryStorePath: join(repo, "missing-advisories.json"),
-      skipMalwareScan: true,
     });
 
     assert.equal(audit.ok, true);
@@ -246,8 +201,6 @@ test("internal audit maps Java imports to Maven and Gradle declarations with rev
     assert.match(audit.dependencyReport.reason, /partial/);
     assert.equal(audit.healthCapabilities.dependencies.status, "CHECKED");
     assert.equal(audit.healthCapabilities.dependencies.completeness, "PARTIAL");
-    assert.equal(audit.healthCapabilities.advisories.status, "NOT_CHECKED");
-    assert.equal(audit.healthCapabilities.malware.status, "NOT_SUPPORTED");
     assert.equal(audit.healthCapabilities.coverage.status, "NOT_SUPPORTED");
     assert.equal(audit.healthCapabilities.concurrency.status, "CHECKED");
     assert.match(audit.healthCapabilities.concurrency.detail, /No race detector ran/);
@@ -279,8 +232,6 @@ test("mixed npm and Maven dependency summary reports both checked ecosystems", a
           { file: javaFile, spec: "org.slf4j.Logger", pkg: "org.slf4j", ecosystem: "Maven", line: 1 },
         ],
       },
-      advisoryStorePath: join(repo, "missing-advisories.json"),
-      skipMalwareScan: true,
     });
 
     assert.equal(audit.dependencyReport.status, "PARTIAL");

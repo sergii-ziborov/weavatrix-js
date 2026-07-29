@@ -1,5 +1,5 @@
 ---
-name: weavatrix
+name: weavatrix-js
 description: "Use the Weavatrix MCP as a reusable local repository-intelligence layer: understand unfamiliar applications with a bounded code graph, reduce repeated context, review Health, dead code, duplicates and history, trace endpoints and blast radius, enforce target architecture, and verify changes before a PR."
 ---
 
@@ -13,8 +13,8 @@ outside its startup repository.
 ## Step 0 — if the tools are missing
 
 Tools are named `mcp__weavatrix__…`. If none are available, ask the user to register the server
-(`claude mcp add -s user weavatrix -- npx -y weavatrix <repoRoot>`; Codex:
-`codex mcp add weavatrix -- npx -y weavatrix <repoRoot>`), then retry.
+(`claude mcp add -s user weavatrix-js -- npx -y weavatrix-js <repoRoot>`; Codex:
+`codex mcp add weavatrix-js -- npx -y weavatrix-js <repoRoot>`), then retry.
 
 First compare the selected profile with the `graph_stats` runtime line. Expected catalogs are 31
 tools for `pinned` and 34 for `offline`. Weavatrix refuses
@@ -92,8 +92,8 @@ projection; expand only when the answer requires it.
   Maven/Gradle imports are mapped to exact artifact ownership when the referenced class is present in
   an already installed local JAR. Missing artifacts, ambiguous class owners, version catalogs or
   dynamic build logic remain `PARTIAL`/`NOT_SUPPORTED`, never a false clean `0 declared / 0 external`.
-- **Review vulnerability evidence**: `run_audit category=vulnerability`. `NOT_CHECKED` is unknown,
-  never clean; remote refresh is an explicit `weavatrix-online` workflow.
+- **Review dependency integrity**: `run_audit category=dependencies`; vulnerability and malware
+  review are explicit `weavatrix-online` workflows and are absent from this local package.
   - **Review dead files, functions, methods and symbols**: `find_dead_code`; every result remains a
     review candidate with framework/dynamic/public-API caveats, never an auto-delete verdict.
   - **Trace dynamic GraphQL/gRPC/Kafka contracts**: export a source-free
@@ -190,18 +190,14 @@ interface dispatch, reflection, or runtime behavior.
   `min_score=85` plus a narrow strong-local fallback; use `min_score=0` only for full diagnostics.
   Inspect its line evidence and measure runtime before scheduling a performance rewrite.
 - **Audit completeness**: read the top-level Health capability matrix first: structure, dependencies,
-  runtime correctness, concurrency, advisories, malware and measured coverage each have independent
+  runtime correctness, concurrency and measured coverage each have independent
   status/completeness. The bounded Go/Java correctness patterns can flag a fixed-index slice hazard,
   discriminator mismatch, lost Java interrupt or unbounded retry candidate, but they are not a
   compiler, race detector, runtime trace, CFG, or proof of race freedom. Then read
-  `dependencyReport.status`, ecosystem support, unused/missing counts, each npm finding's
-  `verification` (manifest, indexed source, scripts/config, unresolved dynamic usage), and
-  `checks.osv.status` / `checks.malware.status`. A dependency result from a partial or unsupported
-  ecosystem is not a repository-wide clean zero. For OSV, `OK` is
-  complete for the recorded dependency fingerprint; `PARTIAL` is incomplete or stale,
-  `NOT_CHECKED` has no repository-specific result, and `ERROR` means the local check failed. Treat
-  the same non-`OK` states as incomplete for malware scanning. Remote OSV refresh belongs to the
-  separate `weavatrix-online` package; this MIT core reads only its validated local cache.
+  `dependencyReport.status`, ecosystem support, unused/missing counts and each npm finding's
+  `verification` (manifest, indexed source, scripts/config, unresolved dynamic usage). A dependency
+  result from a partial or unsupported ecosystem is not a repository-wide clean zero. Vulnerability
+  and malware review belongs to the separate `weavatrix-online` package.
 - **Offline by design**: scans and graph queries use local files; the semantic overlay may launch
   Weavatrix's bundled read-only TypeScript language-server child process, but it never runs repository
   scripts or downloads a provider. Coverage tools read existing reports and never run tests. The

@@ -8,7 +8,7 @@ import { createRuntimeFixture, verifyMcpRuntime } from "./mcp-runtime-smoke.mjs"
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const dist = join(root, "dist-mcpb");
 const stage = join(dist, "stage");
-const output = join(dist, "weavatrix.mcpb");
+const output = join(dist, "weavatrix-js.mcpb");
 const npmCli = process.env.npm_execpath;
 const mcpbCli = join(root, "node_modules", "@anthropic-ai", "mcpb", "dist", "cli", "cli.js");
 

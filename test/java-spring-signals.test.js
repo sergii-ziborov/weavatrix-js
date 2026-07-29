@@ -125,8 +125,6 @@ test("Spring-managed application, configuration, component and repository files 
     }
     const audit = await runInternalAudit(repo, {
       graph: { nodes, links, externalImports: [] },
-      advisoryStorePath: join(repo, "advisories-missing.json"),
-      skipMalwareScan: true,
     });
     assert.equal(audit.ok, true);
     assert.equal(audit.conventionReachability.count, 4);

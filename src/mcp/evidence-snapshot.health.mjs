@@ -1,6 +1,6 @@
 import {
     CAPS, COMPLEXITY_THRESHOLDS, STATE, VERDICT, addIf, bounded, compareText, graphId,
-    normalizeCheckState, numericRecord, optionalNonNegativeInteger, privacySafeText, repoRelativePath,
+    numericRecord, optionalNonNegativeInteger, privacySafeText, repoRelativePath,
     sanitizeFinding,
 } from './evidence-snapshot.common.mjs'
 import {summarizeFindings} from '../analysis/findings.js'
@@ -49,7 +49,6 @@ export function buildHealthSection(graph, audit, repoRoot = null) {
             verdict: VERDICT.UNKNOWN,
             completeness: {reasons: ['AUDIT_ERROR']},
             summary: {bySeverity: {}, byCategory: {}},
-            checks: {osv: STATE.ERROR, malware: STATE.ERROR},
             findings: [],
             complexity: {thresholds: COMPLEXITY_THRESHOLDS, analyzed: 0, hotspots: []},
         }
@@ -64,13 +63,9 @@ export function buildHealthSection(graph, audit, repoRoot = null) {
             compareText(a.rule, b.rule) || compareText(a.file || a.package || '', b.file || b.package || '') || compareText(a.id, b.id)),
     CAPS.findings)
     const hotspots = buildHotspots(graph)
-    const checks = {
-        osv: normalizeCheckState(audit.checks?.osv?.status),
-        malware: normalizeCheckState(audit.checks?.malware?.status),
-    }
-    const state = Object.values(checks).every((value) => value === STATE.COMPLETE || value === STATE.NOT_APPLICABLE)
-        ? STATE.COMPLETE
-        : STATE.PARTIAL
+    const state = findings.completeness.truncated || hotspots.completeness.truncated
+        ? STATE.PARTIAL
+        : STATE.COMPLETE
     return {
         state,
         verdict: findings.completeness.total > 0 || hotspots.completeness.total > 0
@@ -84,14 +79,13 @@ export function buildHealthSection(graph, audit, repoRoot = null) {
         },
         summary: {
             bySeverity: numericRecord(scopedSummary.bySeverity, ['critical', 'high', 'medium', 'low', 'info']),
-            byCategory: numericRecord(scopedSummary.byCategory, ['unused', 'structure', 'vulnerability', 'malware']),
+            byCategory: numericRecord(scopedSummary.byCategory, ['unused', 'structure']),
             dead: numericRecord(audit.deadReport, ['deadSymbols', 'deadFiles', 'unusedExports']),
             structure: numericRecord(audit.structureReport, [
                 'runtimeImportEdges', 'typeOnlyImportEdges', 'compileOnlyImportEdges', 'runtimeCycles',
                 'compileTimeCouplings', 'largestCycle', 'largestCompileTimeCoupling', 'orphans', 'boundaryViolations',
             ]),
         },
-        checks,
         findings: findings.items,
         complexity: {
             thresholds: COMPLEXITY_THRESHOLDS,

@@ -1,4 +1,4 @@
-// Installed-package enumeration for supply-chain scanning: EXACT versions from lockfiles first
+// Installed-package enumeration for offline dependency inventory: exact versions from lockfiles first
 // (package-lock v1/v2/v3, basic yarn.lock, requirements.txt ==pins, go.sum), plus a top-level
 // node_modules walk — which also yields the lockfile-DRIFT signal (installed ≠ locked → tampering or
 // stale install). Parsers are pure + exported for tests; collectInstalled is the thin fs wrapper.
@@ -260,7 +260,7 @@ export function collectInstalled(repoPath) {
   }
   const jvmRust = collectJvmRustInstalled(repoPath);
   // The earlier fast path covers roots and immediate services. Complete the tracked repository
-  // universe so deeply nested Python/Go services are not silently omitted from advisory coverage.
+  // universe so deeply nested Python/Go services are not silently omitted from dependency inventory.
   const repositoryFiles = listRepoFiles(repoPath);
   const allPython = repositoryFiles.flatMap((file) => {
     const text = readRepoText(boundary, file);

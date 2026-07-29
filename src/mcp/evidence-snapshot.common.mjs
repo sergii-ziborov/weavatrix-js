@@ -40,8 +40,7 @@ const SAFE_RULE = /^[a-z0-9][a-z0-9._-]*$/
 const SAFE_FINDING_ID = /^[a-f0-9]{8,64}$/i
 const SAFE_SEVERITY = new Set(['critical', 'high', 'medium', 'low', 'info'])
 const SAFE_CONFIDENCE = new Set(['high', 'medium', 'low'])
-const SAFE_CATEGORY = new Set(['unused', 'structure', 'vulnerability', 'malware'])
-const SAFE_CHECK_STATE = new Set(Object.values(STATE))
+const SAFE_CATEGORY = new Set(['unused', 'structure'])
 
 export function metadataString(value, max = 512) {
     return typeof value === 'string' && value.length > 0 && value.length <= max && !CONTROL_CHARS.test(value)
@@ -122,11 +121,6 @@ function stableStringify(value) {
 
 export function hashSnapshot(snapshot) {
     return createHash('sha256').update(stableStringify(snapshot)).digest('hex')
-}
-
-export function normalizeCheckState(value) {
-    if (value === 'OK') return STATE.COMPLETE
-    return SAFE_CHECK_STATE.has(value) ? value : STATE.ERROR
 }
 
 export function sanitizeFinding(value) {

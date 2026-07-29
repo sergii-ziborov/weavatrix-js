@@ -110,9 +110,8 @@ endpoint-recall gate; it does not displace these deliverables. The executable co
   double-opt-in allowlisted package-script test runner.
 - Delivered: bounded JS/TS call-argument-to-parameter evidence. This is useful interprocedural data
   flow for edits, but does not claim CFG/value/taint completeness.
-- Delivered: npm cache/release-snapshot exclusion in malware scanning and evidence-gated remediation.
-- Delivered: heuristic malware severity capped at `high` without independent execution/advisory
-  confirmation, with explicit verification state instead of compromise claims.
+- Historical 0.2 delivery: bounded local malware heuristics. They are removed
+  from the offline 0.3.15 package and now belong to `weavatrix-online`.
 - Delivered: production-only `query_graph` traversal, low-signal constant/field suppression, focused
   hot-path defaults, dead-code evidence tiers, and per-finding dependency manifest/source proof.
 - Delivered: an agent-task benchmark harness with local routing success, false-positive, token and
@@ -158,6 +157,8 @@ endpoint-recall gate; it does not displace these deliverables. The executable co
 - Extract every outbound HTTP implementation into `weavatrix-online`; remove
   hosted URL/token inputs and compatibility aliases from offline npm/MCPB
   artifacts.
+- Remove dependency-vulnerability and installed-package malware scanners from
+  the offline artifact; Online owns refresh, matching and security review.
 - Publish a stable extension API so online updates consume the core as a
   dependency instead of forking parsers, graph schemas or Health analyzers.
 - Delivered early in 0.2.4: lazy local TS/JS LSP verification for bounded

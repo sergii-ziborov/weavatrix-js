@@ -23,16 +23,12 @@ import { createRepoBoundary } from "../repo-path.js";
 import { analyzeSourceCorrectness } from "./source-correctness.js";
 import { collectJvmDependencyEvidence } from "./jvm-dependency-evidence.js";
 import { buildDependencyHealth } from "./internal-audit/dependency-health.js";
-import { runSupplyChainChecks } from "./internal-audit/supply-chain.js";
+import { runDependencyIntegrityChecks } from "./internal-audit/dependency-integrity.js";
 import { collectGoDependencyEvidence } from "./go-dependency-evidence.js";
 import { collectCargoDependencyEvidence } from "./cargo-dependency-evidence.js";
 
 export async function runInternalAudit(repoPath, {
   graph,
-  advisoryStorePath,
-  skipMalwareScan = false,
-  malwareExclusions = {},
-  rgPath = "",
 } = {}) {
   if (!existsSync(repoPath)) return { ok: false, error: "Repo path not found" };
   const boundary = createRepoBoundary(repoPath);
@@ -177,16 +173,10 @@ export async function runInternalAudit(repoPath, {
     }));
   }
 
-  const supplyChain = await runSupplyChainChecks(repoPath, {
-    externalImports,
+  const dependencyIntegrity = runDependencyIntegrityChecks(repoPath, {
     packageScopes,
-    isNonProductPath,
-    advisoryStorePath,
-    skipMalwareScan,
-    malwareExclusions,
-    rgPath,
   });
-  findings.push(...supplyChain.findings);
+  findings.push(...dependencyIntegrity.findings);
   const sorted = sortFindings(findings);
   const dependencyHealth = buildDependencyHealth({
     repoPath,
@@ -203,7 +193,6 @@ export async function runInternalAudit(repoPath, {
     packageScopes,
     sourceFiles: [...sources.keys()],
     correctnessCoverage: correctness.coverage,
-    checks: supplyChain.checks,
   });
 
   return {
@@ -218,11 +207,8 @@ export async function runInternalAudit(repoPath, {
       manifestDeps: dependencyHealth.manifestDeps,
       externalImports: externalImports.length,
       nodeModulesPresent: boundary.resolve("node_modules").ok,
-      installedPackages: supplyChain.installedCount,
-      advisoryDbDate: supplyChain.advisoryDbDate,
-      advisoryStatus: supplyChain.checks.osv.status,
-      malwareScanMode: supplyChain.malwareScan?.scanMode || "skipped",
-      malwareStatus: supplyChain.checks.malware.status,
+      installedPackages: dependencyIntegrity.installedCount,
+      dependencyIntegrityStatus: dependencyIntegrity.status,
       packageScopes: packageScopes.length,
       managedPythonDependencies: managedPython.length,
       nonRuntimeRoots,
@@ -250,7 +236,9 @@ export async function runInternalAudit(repoPath, {
     structureReport: structure.stats,
     sourceCorrectnessReport: correctness.coverage,
     healthCapabilities: dependencyHealth.healthCapabilities,
-    checks: supplyChain.checks,
-    malwareScan: supplyChain.malwareScan,
+    dependencyIntegrity: {
+      status: dependencyIntegrity.status,
+      detail: dependencyIntegrity.detail,
+    },
   };
 }

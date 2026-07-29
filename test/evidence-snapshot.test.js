@@ -75,16 +75,14 @@ test('evidence snapshot is canonical across shuffled graph arrays and separates 
     }
 })
 
-test('evidence snapshot preserves unknown checks and never emits source text, snippets, titles, or absolute paths', async () => {
+test('evidence snapshot has no online security state and never emits source text, snippets, titles, or absolute paths', async () => {
     const repo = fixtureRepo()
     const secret = 'PRIVATE_SOURCE_BODY_9f4c'
     try {
         const snapshot = await createEvidenceSnapshot({repoRoot: repo, graph: fixtureGraph(secret)})
-        assert.equal(snapshot.sections.health.checks.osv, 'NOT_CHECKED')
-        assert.equal(snapshot.sections.packages.checks.osv, 'NOT_CHECKED')
-        assert.equal(snapshot.sections.health.state, 'PARTIAL')
-        assert.notEqual(snapshot.sections.health.verdict, 'PASS')
-        assert.notEqual(snapshot.sections.packages.verdict, 'PASS')
+        assert.equal(Object.hasOwn(snapshot.sections.health, 'checks'), false)
+        assert.equal(Object.hasOwn(snapshot.sections.packages, 'checks'), false)
+        assert.equal(snapshot.sections.health.state, 'COMPLETE')
         for (const finding of snapshot.sections.health.findings) {
             assert.equal(Object.hasOwn(finding, 'title'), false)
             assert.equal(Object.hasOwn(finding, 'detail'), false)
@@ -133,9 +131,8 @@ test('hosted health evidence excludes classified-only findings and recomputes it
             findings: [production, benchmark],
             summary: {
                 bySeverity: {critical: 0, high: 0, medium: 0, low: 1, info: 1},
-                byCategory: {unused: 2, structure: 0, vulnerability: 0, malware: 0},
+                byCategory: {unused: 2, structure: 0},
             },
-            checks: {osv: {status: 'NOT_CHECKED'}, malware: {status: 'NOT_CHECKED'}},
             deadReport: {},
             structureReport: {},
         }, repo)
@@ -154,7 +151,7 @@ test('package evidence is COMPLETE and PASS when every bounded input and check i
             {installed: []},
             null,
             {externalImports: []},
-            {findings: [], checks: {osv: {status: 'COMPLETE'}, malware: {status: 'NOT_APPLICABLE'}}},
+            {findings: []},
             repo,
         )
         assert.equal(section.dependencyGraph.state, 'COMPLETE')

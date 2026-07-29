@@ -1,8 +1,8 @@
 // Typosquat / name-confusion detection: is a package name a near-miss of a popular one (a classic
 // supply-chain lure — crossenv↔cross-env, lodahs↔lodash)? Damerau-Levenshtein (handles transposition)
 // against a bundled top-package list. Deliberately LOW-FP: many legit packages sit distance-1 from a
-// popular one, so the caller GATES this — transitive deps only surface when a second malware signal
-// co-fires (scanMalware), direct deps surface quietly at info level. DEPS_SECURITY_PLAN P6.
+// popular one. The offline audit applies this only to direct declarations and reports name-confusion
+// review evidence; it is not a vulnerability or malware verdict.
 
 // Popular + historically-typosquatted npm names. Not exhaustive — the high-value lure targets.
 export const TOP_PACKAGES = new Set([

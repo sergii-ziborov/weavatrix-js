@@ -38,7 +38,7 @@ export function auditFindingPathScope(findings, {includeClassified = false, repo
     return {findings: kept, suppressed: all.length - kept.length}
 }
 
-const DEPENDENCY_AUDIT_RULES = new Set(['unused-dep', 'missing-dep', 'duplicate-dep', 'unresolved-import', 'lockfile-drift'])
+const DEPENDENCY_AUDIT_RULES = new Set(['unused-dep', 'missing-dep', 'duplicate-dep', 'unresolved-import', 'lockfile-drift', 'typosquat'])
 export const isDependencyAuditFinding = (finding) => DEPENDENCY_AUDIT_RULES.has(String(finding?.rule || ''))
 
 export const auditFilter = (audit, args, findings = audit.findings, repoRoot = null) => {
@@ -49,11 +49,6 @@ export const auditFilter = (audit, args, findings = audit.findings, repoRoot = n
         .filter((finding) => !category || (category === 'dependencies' ? isDependencyAuditFinding(finding) : finding.category === category))
 }
 
-const auditChecksLine = (audit) => {
-    const check = (name, state) => `${name} ${state?.status || 'ERROR'}${state?.detail ? ` — ${state.detail}` : ''}`
-    return `Checks: ${check('OSV', audit.checks?.osv)}; ${check('RustSec report', audit.checks?.rustsec)}; ${check('malware', audit.checks?.malware)}. A NOT_CHECKED/PARTIAL/ERROR check is incomplete or unknown, never a clean zero.`
-}
-
 const auditCapabilityLines = (audit) => {
     const matrix = audit.healthCapabilities || {}
     const rows = [
@@ -61,8 +56,6 @@ const auditCapabilityLines = (audit) => {
         ['dependencies', 'dependencies'],
         ['runtimeCorrectness', 'runtime correctness'],
         ['concurrency', 'concurrency'],
-        ['advisories', 'advisories'],
-        ['malware', 'malware'],
         ['coverage', 'coverage'],
     ]
     const lines = ['Health capability matrix (status/completeness):']
@@ -161,15 +154,14 @@ export const formatOrdinaryAudit = (audit, args, findings = audit.findings, head
     const dependencyCounts = scopedDependencyFindingCounts(findings, pathScope.findings)
     return [
         heading,
-        `Internal audit of ${audit.repo} (${audit.scanned.files} files, ${audit.scanned.symbols} symbols, ${audit.scanned.externalImports} external imports; malware scan: ${audit.scanned.malwareScanMode}).`,
+        `Internal audit of ${audit.repo} (${audit.scanned.files} files, ${audit.scanned.symbols} symbols, ${audit.scanned.externalImports} external imports).`,
         ...auditConventionLines(audit),
         auditDependencySummaryLine(audit, deps, dependencyCounts),
         ...auditDependencyCoverageLines(deps),
         ...auditCapabilityLines(audit),
         ...auditExtensionLines(audit),
-        `Scoped severity: critical ${sev.critical}, high ${sev.high}, medium ${sev.medium}, low ${sev.low}, info ${sev.info}. Scoped categories: unused ${bycat.unused}, structure ${bycat.structure}, vulnerability ${bycat.vulnerability}, malware ${bycat.malware}.`,
+        `Scoped severity: critical ${sev.critical}, high ${sev.high}, medium ${sev.medium}, low ${sev.low}, info ${sev.info}. Scoped categories: unused ${bycat.unused}, structure ${bycat.structure}.`,
         pathScope.suppressed ? `Path policy: production-first; suppressed ${pathScope.suppressed} finding(s) whose evidence is entirely test/e2e/generated/vendored/mock/story/docs/benchmark/temp or explicitly excluded. Pass include_classified:true to include them.` : 'Path policy: production-first; no classified-only findings were suppressed.',
-        `Repository-level ${auditChecksLine(audit)}`,
         '',
         `Showing ${shown.length} of ${filtered.length} finding(s)${args.category ? ` in category "${args.category}"` : ''}${args.min_severity ? ` at ≥${args.min_severity}` : ''}:`,
         ...shown.map(formatAuditFinding),

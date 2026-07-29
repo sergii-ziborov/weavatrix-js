@@ -1,6 +1,6 @@
 {
   "name": "weavatrix-js",
-  "version": "0.3.14",
+  "version": "0.3.15",
   "type": "module",
   "description": "JavaScript engine of Weavatrix, the local repository intelligence MCP for AI coding agents: an always-fresh architecture graph with production-first evidence — blast radius, dead code, endpoints, clones, history, Health and architecture safeguards, with honestly labeled precision. The weavatrix npm package now ships the native Rust engine; this fork continues the JavaScript line.",
   "author": "Sergii Ziborov <sergii.ziborov@gmail.com>",
@@ -18,7 +18,7 @@
     "node": ">=18"
   },
   "bin": {
-    "weavatrix-mcp": "bin/weavatrix-mcp.mjs"
+    "weavatrix-js": "bin/weavatrix-mcp.mjs"
   },
   "exports": {
     "./mcp-runtime": "./src/mcp-runtime.mjs",
@@ -34,28 +34,13 @@
     "scripts/run-agent-task-benchmark.mjs",
     "docs/agent-task-benchmark.md",
     "docs/adr/0001-v0.3-offline-online-split.md",
-    "docs/releases/v0.3.0.md",
-    "docs/releases/v0.3.1.md",
-    "docs/releases/v0.3.2.md",
-    "docs/releases/v0.3.3.md",
-    "docs/releases/v0.3.4.md",
-    "docs/releases/v0.3.5.md",
-    "docs/releases/v0.3.6.md",
-    "docs/releases/v0.3.7.md",
-    "docs/releases/v0.3.8.md",
-    "docs/releases/v0.3.9.md",
-    "docs/releases/v0.3.10.md",
-    "docs/releases/v0.3.11.md",
-    "docs/releases/v0.3.12.md",
-    "docs/releases/v0.3.13.md",
-    "docs/releases/v0.3.14.md",
-    "docs/releases/v0.2.19.md",
+    "docs/releases/v0.3.15.md",
     "README.md",
     "SECURITY.md",
     "LICENSE"
   ],
   "scripts": {
-    "test": "node --test",
+    "test": "node --test --test-concurrency=4",
     "benchmark": "node scripts/run-benchmark.mjs",
     "benchmark:quick": "node scripts/run-benchmark.mjs --quick",
     "benchmark:real": "node scripts/run-real-benchmark.mjs",

@@ -7,11 +7,7 @@ import {createEvidenceSnapshot} from '../mcp/evidence-snapshot.mjs'
 import {graphHomeDir, graphOutDirForRepo} from '../graph/layout.js'
 import {registerRepository, repositoryRecord} from '../graph/repo-registry.js'
 import {writeCachedArchitectureContract} from '../analysis/architecture-contract.js'
-import {collectInstalled} from '../security/installed.js'
 import {toolResult} from '../mcp/tool-result.mjs'
-import {
-    commitAdvisoryRefresh, createAdvisoryQueryPlan, DEFAULT_STORE, storeMeta,
-} from '../security/advisory-store.js'
 
 const MAX_GRAPH_FILE_BYTES = 64 * 1024 * 1024
 
@@ -61,15 +57,4 @@ export function activeRepositoryIdentity(ctx = {}) {
 
 export const cacheArchitectureContract = (graphPath, contract) => writeCachedArchitectureContract(graphPath, contract)
 
-export function installedPackageCoordinates(repoRoot) {
-    if (!repoRoot) throw new Error('No repository root is active.')
-    return collectInstalled(repoRoot).installed
-}
-
-export const advisoryCacheMetadata = (storePath = DEFAULT_STORE) => ({
-    path: storePath,
-    ...storeMeta(storePath),
-})
-
-export {commitAdvisoryRefresh, createAdvisoryQueryPlan}
 export {toolResult}

@@ -25,11 +25,7 @@ test('unused export evidence and the dead-code queue share public-surface confid
     const graphPath = join(repo, 'graph.json')
     writeFileSync(graphPath, JSON.stringify(graph))
 
-    const audit = await runInternalAudit(repo, {
-      graph,
-      advisoryStorePath: join(repo, 'missing-advisories.json'),
-      skipMalwareScan: true,
-    })
+    const audit = await runInternalAudit(repo, {graph})
     const unusedExport = audit.findings.find((finding) => finding.rule === 'unused-export')
     assert.ok(unusedExport)
     assert.equal(unusedExport.severity, 'info')

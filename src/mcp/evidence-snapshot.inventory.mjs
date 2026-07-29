@@ -1,5 +1,5 @@
 import {
-    CAPS, STATE, VERDICT, addIf, bounded, compareText, metadataString, normalizeCheckState,
+    CAPS, STATE, VERDICT, addIf, bounded, compareText, metadataString,
     repoRelativePath, safeToken,
 } from './evidence-snapshot.common.mjs'
 import {buildPackageDependencyGraph} from './evidence-snapshot.package-graph.mjs'
@@ -106,7 +106,6 @@ export function buildPackagesSection(installedResult, installedError, graph, aud
             state: STATE.ERROR,
             verdict: VERDICT.UNKNOWN,
             completeness: {...dependencyGraphCounts, reasons: ['PACKAGE_INVENTORY_ERROR']},
-            checks: {osv: normalizeCheckState(audit?.checks?.osv?.status), malware: normalizeCheckState(audit?.checks?.malware?.status)},
             inventory: [],
             directUsage: [],
             dependencyGraph,
@@ -117,18 +116,11 @@ export function buildPackagesSection(installedResult, installedError, graph, aud
             compareText(a.version, b.version) || compareText(a.source, b.source) || Number(a.dev) - Number(b.dev)),
     CAPS.packages)
     const usage = bounded(buildDirectUsage(graph?.externalImports), CAPS.directUsage)
-    const packageRules = new Set(['unused-dep', 'missing-dep', 'duplicate-dep', 'lockfile-drift', 'known-vuln', 'malicious-package', 'typosquat'])
+    const packageRules = new Set(['unused-dep', 'missing-dep', 'duplicate-dep', 'lockfile-drift', 'typosquat'])
     const packageFailure = (audit?.findings || []).some((finding) => packageRules.has(finding?.rule))
-    const checks = {
-        osv: normalizeCheckState(audit?.checks?.osv?.status),
-        malware: normalizeCheckState(audit?.checks?.malware?.status),
-    }
     const reasons = []
     if (inventory.completeness.truncated) reasons.push('PACKAGE_INVENTORY_TRUNCATED')
     if (usage.completeness.truncated) reasons.push('DIRECT_USAGE_TRUNCATED')
-    if (Object.values(checks).some((value) => ![STATE.COMPLETE, STATE.NOT_APPLICABLE].includes(value))) {
-        reasons.push('OPTIONAL_CHECKS_INCOMPLETE')
-    }
     if ([STATE.PARTIAL, STATE.ERROR].includes(dependencyGraph.state)) reasons.push('PACKAGE_DEPENDENCY_GRAPH_PARTIAL')
     const state = reasons.length ? STATE.PARTIAL : STATE.COMPLETE
     return {
@@ -140,7 +132,6 @@ export function buildPackagesSection(installedResult, installedError, graph, aud
             ...dependencyGraphCounts,
             reasons,
         },
-        checks,
         inventory: inventory.items,
         directUsage: usage.items,
         dependencyGraph,

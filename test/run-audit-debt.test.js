@@ -65,8 +65,8 @@ test("run_audit compares an immutable baseline and never relabels old debt as ne
     assert.ok(compared.result.comparison.existing.some((finding) => finding.rule === "unused-dep" && finding.package === "left-pad"), "old dependency debt remains existing even though package.json changed");
     assert.ok(compared.result.comparison.fixed.some((finding) => finding.rule === "unused-dep" && finding.package === "lodash"), "removed baseline debt is reported as fixed");
     assert.ok(compared.result.findings.every((finding) => compared.result.comparison.new.some((fresh) => fresh.id === finding.id)), "default output contains new findings only");
-    assert.ok(compared.result.comparison.optional.checks.every((check) => check.status === "UNCOMPARABLE"));
-    assert.match(compared.text, /OSV UNCOMPARABLE/);
+    assert.equal(Object.hasOwn(compared.result.comparison, "optional"), false);
+    assert.doesNotMatch(compared.text, /OSV|malware|vulnerab/i);
     assert.match(compared.text, /fixed deterministic finding/);
 
     const scoped = await tRunAudit(loaded, { changed_files: ["src/a.js"], max_findings: 100 }, ctx);

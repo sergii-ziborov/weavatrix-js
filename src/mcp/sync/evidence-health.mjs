@@ -1,5 +1,5 @@
 import {
-    CAPS, CATEGORIES, CONFIDENCE, SEVERITIES, checks, compare, count, graphId,
+    CAPS, CATEGORIES, CONFIDENCE, SEVERITIES, compare, count, graphId,
     int, list, numericRecord, packageName, path, privacySafeText, reasons, set,
     state, text, token, verdict,
 } from './evidence-common.mjs'
@@ -34,11 +34,11 @@ export function sanitizeHealth(value) {
         completeness: {findings: count(value?.completeness?.findings, findings.total, findings.items.length), hotspots: count(value?.completeness?.hotspots, hotspots.total, hotspots.items.length), reasons: reasons(value?.completeness?.reasons)},
         summary: {
             bySeverity: numericRecord(value?.summary?.bySeverity, ['critical', 'high', 'medium', 'low', 'info']),
-            byCategory: numericRecord(value?.summary?.byCategory, ['unused', 'structure', 'vulnerability', 'malware']),
+            byCategory: numericRecord(value?.summary?.byCategory, ['unused', 'structure']),
             dead: numericRecord(value?.summary?.dead, ['deadSymbols', 'deadFiles', 'unusedExports']),
             structure: numericRecord(value?.summary?.structure, ['runtimeImportEdges', 'typeOnlyImportEdges', 'compileOnlyImportEdges', 'runtimeCycles', 'compileTimeCouplings', 'largestCycle', 'largestCompileTimeCoupling', 'orphans', 'boundaryViolations']),
         },
-        checks: checks(value?.checks), findings: findings.items,
+        findings: findings.items,
         complexity: {thresholds: {loc: {warning: int(value?.complexity?.thresholds?.loc?.warning), high: int(value?.complexity?.thresholds?.loc?.high)}, cyclomatic: {warning: int(value?.complexity?.thresholds?.cyclomatic?.warning), high: int(value?.complexity?.thresholds?.cyclomatic?.high)}, params: {warning: int(value?.complexity?.thresholds?.params?.warning), high: int(value?.complexity?.thresholds?.params?.high)}}, analyzed: int(value?.complexity?.analyzed), hotspots: hotspots.items},
     }
 }

@@ -32,6 +32,14 @@ function extensionRgCandidates() {
   const home = process.env.USERPROFILE || process.env.HOME || "";
   const roots = [".vscode", ".vscode-insiders", ".cursor"].map((d) => home && join(home, d, "extensions")).filter(Boolean);
   const out = [];
+  const nativeName = process.platform === "win32" ? /^rg\.exe$/i : /^rg$/i;
+  const isForeignPlatform = (path) => {
+    const normalized = path.replaceAll("\\", "/").toLowerCase();
+    if (process.platform === "win32") return /\/(?:linux|darwin|macos)-[^/]+\//.test(normalized);
+    if (process.platform === "darwin") return /\/(?:linux|windows|win32)-[^/]+\//.test(normalized);
+    if (process.platform === "linux") return /\/(?:darwin|macos|windows|win32)-[^/]+\//.test(normalized);
+    return false;
+  };
   const walk = (dir, depth = 0) => {
     if (!dir || depth > 5 || out.length >= 20 || !existsSync(dir)) return;
     let entries = [];
@@ -39,7 +47,7 @@ function extensionRgCandidates() {
     for (const ent of entries) {
       if (out.length >= 20) break;
       const full = join(dir, ent.name);
-      if (ent.isFile() && /^rg(\.exe)?$/i.test(ent.name)) out.push(full);
+      if (ent.isFile() && nativeName.test(ent.name) && !isForeignPlatform(full)) out.push(full);
       else if (ent.isDirectory()) walk(full, depth + 1);
     }
   };
@@ -59,7 +67,8 @@ async function whereRg() {
 // git grep → Node), "system" (ONLY the system-installed rg from PATH, then Node), "git" (git grep /
 // git ls-files, then Node), "node" (skip native tools entirely, pure-Node scanner).
 const _rgCache = new Map(); // engine|rgPath -> { info, at }
-// exported: the malware scanner (security/malware-heuristics.js) reuses the same rg resolution
+// Exported for bounded repository search callers that share the same native
+// executable validation and pure-Node fallback.
 export async function resolveRgInfo(engine = "auto", rgPath = "") {
   if (engine === "node" || engine === "git") return null;
   const key = `${engine}|${rgPath}`;
@@ -78,8 +87,15 @@ export async function resolveRgInfo(engine = "auto", rgPath = "") {
   let info = null;
   for (const c of cands) {
     if (c.path === "rg" || existsSync(c.path)) {
-      info = { path: c.path, source: c.source, detail: `${c.source}: ${c.path}` };
-      break;
+      try {
+        const probe = await runCommand(c.path, ["--version"], { timeoutMs: 4000 });
+        if (probe.exitCode === 0 && /^ripgrep\s+\d/im.test(String(probe.stdout || ""))) {
+          info = { path: c.path, source: c.source, detail: `${c.source}: ${c.path}` };
+          break;
+        }
+      } catch {
+        // A stale or foreign-platform editor binary is not a usable candidate.
+      }
     }
   }
   _rgCache.set(key, { info, at: Date.now() });
