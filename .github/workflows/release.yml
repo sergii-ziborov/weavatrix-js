@@ -156,6 +156,15 @@ jobs:
           path: dist-mcpb
       - name: Verify bundle checksum
         run: cd dist-mcpb && sha256sum --check weavatrix-js.mcpb.sha256
+      - name: Require immutable GitHub releases before publishing
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh api \
+            -H 'X-GitHub-Api-Version: 2026-03-10' \
+            "repos/$GITHUB_REPOSITORY/immutable-releases" |
+            jq -e '.enabled == true' >/dev/null
       - name: Compose checked-in and generated release notes
         env:
           GH_TOKEN: ${{ github.token }}
